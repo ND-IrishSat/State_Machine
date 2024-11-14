@@ -14,6 +14,11 @@ typedef enum transit_event{
     NOT_DOING_RESEARCH_EVT
 } transit_event;
 
+
+void detumbling(void);
+void payload(void);
+void deploy(void);
+
 typedef struct fc_stm {
     stateFuncPtr curr_state;
     transit_event trig_event;
@@ -23,6 +28,45 @@ typedef struct fc_stm {
 
 fc_stm = {
 }
+
+void deploy(){
+
+}
+
+void detumbling(){
+    // Need:
+    // Sensors
+    // Magnotorquers
+    // Flight Computer
+}
+void payload(){
+    // Need:
+    // IMU
+    // Magnetorquers
+    // Payload
+    // Flight Computer
+    // Motors CONDITIONALLY
+}
+void uplinkDownlink(){
+    // Need:
+    // IMU
+    // Magnetorquers
+    // Flight Computer
+    // Motors
+    // Sidekiq Z2
+}
+void lowChargeSunPointing(){
+    // Need:
+    // IMU
+    // Magnetorquers
+    // Flight Computer
+    // Motors
+}
+void sleep(){
+    // Need:
+    //honk shoo
+}
+
 
 
 
