@@ -1,13 +1,16 @@
-#include<stdio.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include "sample_state_functions.h"
 
 typedef void (*stateFuncPtr)(void);
 
+// Define all events
 typedef enum transit_event{ 
     EVT_NO_EVENT,
     LAUNCH_COMPLETE_EVT,
     DETUMBLING_COMPLETE_EVT,
     DEPLOYMENT_COMPLETE_EVT,
+    
     CRIT_BATTERY_EVT,
     LOW_CHARGE_EVT,
     ABOVE_COMMS_EVT,
@@ -16,25 +19,24 @@ typedef enum transit_event{
     NOT_DOING_RESEARCH_EVT
 } transit_event;
 
+
+// Define all states
 void idle(void);
 void detumbling(void);
 void deploySolar(void);
 void lowChargeSunPointing(void);
 void uplinkDownlink(void);
 void payload(void);
-void sleep(void);
+void hibernate(void);
 
+// Define a row of STM
 typedef struct fc_stm {
     stateFuncPtr curr_state;
     transit_event trig_event;
     stateFuncPtr next_state;
-void deploy(void);
-void detumbling(void);
-void payload(void);
-
 } fc_stm_row;
 
-static eEvent eCurrentEvent = EVT_NO_EVENT;
+static transit_event eCurrentEvent = EVT_NO_EVENT;
 static stateFuncPtr stCurrentState = idle;
 // Used to flag first entry to a state
 static bool bIsStateFirstEntry = false;
@@ -47,19 +49,24 @@ fc_stm_row fc_stm[] = {
     {deploySolar, DEPLOYMENT_COMPLETE_EVT, lowChargeSunPointing},
     
     // low charge state transitions
-    {lowChargeSunPointing, CRIT_BATTERY_EVT, sleep},
+    {lowChargeSunPointing, CRIT_BATTERY_EVT, hibernate},
     {lowChargeSunPointing, LOW_CHARGE_EVT, lowChargeSunPointing},
-
-    // Battery charge check
     {lowChargeSunPointing, ABOVE_COMMS_EVT, uplinkDownlink},
-    {uplinkDownlink, NOT_ABOVE_COMMS_EVT, payload},
+    {lowChargeSunPointing, NOT_ABOVE_COMMS_EVT, lowChargeSunPointing},
+    {lowChargeSunPointing, DOING_RESEARCH_EVT, payload},
+    {lowChargeSunPointing, NOT_DOING_RESEARCH_EVT, lowChargeSunPointing},
+
+    // Down/Up link operations
+    {uplinkDownlink, DOING_RESEARCH_EVT, payload},
+    {uplinkDownlink, NOT_DOING_RESEARCH_EVT, lowChargeSunPointing},
 
     // Payload operations
-    {payload, DOING_RESEARCH_EVT, payload}
+    {payload, DOING_RESEARCH_EVT, payload},
     {payload, NOT_DOING_RESEARCH_EVT, lowChargeSunPointing},
 
     // Hibernate transitions
-    {sleep, LOW_CHARGE_EVT, lowChargeSunPointing}
+    {hibernate, LOW_CHARGE_EVT, lowChargeSunPointing},
+    {hibernate, CRIT_BATTERY_EVT, hibernate}
 };
 
 // variables for state machine
@@ -84,12 +91,31 @@ void StateMachineHandler()
                 eCurrentEvent = EVT_NO_EVENT;
                 /// Notify the state that exit is imminent;
                 bIsStateAboutToExit = true;
-                stCurrentState
-
+                stCurrentState();
+                // Move to new state
+                stCurrentState = stStm[idx].next_state;
+                // Flag that this is the first entry to the state
+                bIsStateFirstEntry = true
             }
         }
     }
-}
+
+    if(NULL != stCurrentState)
+    {
+        /// Run the state
+        stCurrentState();
+        /// Unflag first entry
+        bIsStateFirstEntry = false;
+    }
+};
+
+int main()
+{
+    while(true)
+    {
+        StateMachineHadnler();
+    }
+};
 
 
 
