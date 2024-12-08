@@ -28,7 +28,7 @@ float get_voltage() {
     i2c_fd = open("/dev/i2c-1", O_RDWR);
     if (i2c_fd < 0) {
         perror("Failed to open the i2c bus.\n");
-        return -1;
+        return -1.0;
     }
     unsigned char data[2] = {0};
 
