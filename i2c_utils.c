@@ -6,7 +6,7 @@ int read_register_data(int reg_addr, int length, unsigned char *data) {
     i2c_fd = open("/dev/i2c-1", O_RDWR);
     if (i2c_fd < 0) {
         perror("Failed to open the i2c bus.\n");
-        return -11;
+        return -1;
     }
 
     if (ioctl(i2c_fd, I2C_SLAVE, DEVICE_ADDRESS) < 0) {
