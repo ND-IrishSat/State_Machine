@@ -1,8 +1,10 @@
- #include<stdio.h>
+#include<stdio.h>
+#include "i2c_utils.h"
 
 typedef void (*stateFuncPtr)(void);
 
 typedef enum transit_event{ 
+    NO_EVT,
     LAUNCH_COMPLETE_EVT,
     DETUMBLING_COMPLETE_EVT,
     DEPLOYMENT_COMPLETE_EVT,
@@ -18,6 +20,10 @@ typedef enum transit_event{
 void detumbling(void);
 void payload(void);
 void deploy(void);
+void low_charge_sun_pointing(void);
+void hibernate(void);
+void payload(void);
+void uplink_downlink(void);
 
 typedef struct fc_stm {
     stateFuncPtr curr_state;
@@ -26,10 +32,7 @@ typedef struct fc_stm {
 
 } fc_stm;
 
-fc_stm = {
-}
-
-void deploy(){
+void launching(void){
 
 }
 
@@ -39,6 +42,25 @@ void detumbling(){
     // Magnotorquers
     // Flight Computer
 }
+
+void deploy(){
+
+}
+
+void low_charge_sun_pointing(){
+    // Need:
+    // IMU
+    // Magnetorquers
+    // Flight Computer
+    // Motors
+}
+
+
+void hibernate(){
+    // Need:
+    //honk shoo
+}
+
 void payload(){
     // Need:
     // IMU
@@ -47,7 +69,7 @@ void payload(){
     // Flight Computer
     // Motors CONDITIONALLY
 }
-void uplinkDownlink(){
+void uplink_downlink(){
     // Need:
     // IMU
     // Magnetorquers
@@ -55,18 +77,10 @@ void uplinkDownlink(){
     // Motors
     // Sidekiq Z2
 }
-void lowChargeSunPointing(){
-    // Need:
-    // IMU
-    // Magnetorquers
-    // Flight Computer
-    // Motors
-}
-void sleep(){
-    // Need:
-    //honk shoo
-}
 
+static transit_event curr_evt = NO_EVT
 
+fc_stm state_matrix = {
+    {launching, LAUNCH_COMPLETE_EVT, detumbling},
 
-
+};
