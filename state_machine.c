@@ -115,6 +115,6 @@ int main()
 {
     while(true)
     {
-        StateMachineHadnler();
+        StateMachineHandler();
     }
 };
