@@ -1,3 +1,4 @@
+//test commit
 #include "sm.h"             // related header
 
 #include <stdio.h>          // C system headers
