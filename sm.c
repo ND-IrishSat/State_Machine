@@ -1,9 +1,9 @@
-//test commit
 #include "sm.h"             // related header
 
 #include <stdio.h>          // C system headers
 #include <stdlib.h>
 #include <string.h>
+#include <i2c_utils.h>
 
 #include "pico/stdlib.h"    // other libraries' headers
 
