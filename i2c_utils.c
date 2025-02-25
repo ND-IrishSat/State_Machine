@@ -14,7 +14,18 @@
 //run the code
 // sudo ./i2c_monitor
 
-#define DEVICE_ADDRESS 0x6B  // Replace with your actual device address
+//////////////////////ADDRESSES
+//MPPT
+#define MPPT_ADDRESS 0x6B 
+//GPIO
+#define GPIO_ADDRESS_1 0x24 //?? Val thinks
+#define GPIO_ADDRESS_2 0x18
+//Current Sensing Adresses
+#define CURRENT_ADDRESS_1 0x10
+#define CURRENT_ADDRESS_2 0x17
+
+
+
 
 typedef struct {
     const char *name;
@@ -102,7 +113,7 @@ int close_bus() {
 
 
 int read_register_data(int reg_addr, int length, unsigned char *data) {
-    if (ioctl(i2c_fd, I2C_SLAVE, DEVICE_ADDRESS) < 0) {
+    if (ioctl(i2c_fd, I2C_SLAVE, MPPT_ADDRESS) < 0) {
         perror("Failed to acquire bus access and/or talk to slave.\n");
         return -1;
     }
