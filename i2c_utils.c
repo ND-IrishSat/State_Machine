@@ -112,8 +112,8 @@ int close_bus() {
 }
 
 
-int read_register_data(int reg_addr, int length, unsigned char *data) {
-    if (ioctl(i2c_fd, I2C_SLAVE, MPPT_ADDRESS) < 0) {
+int read_register_data(int reg_addr, int length, unsigned char *data, int bus_addr) {
+    if (ioctl(i2c_fd, I2C_SLAVE, bus_addr) < 0) {
         perror("Failed to acquire bus access and/or talk to slave.\n");
         return -1;
     }
@@ -138,7 +138,7 @@ float get_voltage() {
     unsigned char data[2] = {0};
 
     // Correct condition to check for read error
-    if (read_register_data(0x3B, 2, data) != 0) {
+    if (read_register_data(0x3B, 2, data, MPPT_ADDRESS) != 0) {
         return -1.0; // Error value
     }
 
@@ -148,7 +148,7 @@ float get_voltage() {
 }
 
 
-void display_data() {
+void display_mppt_data() {
     initscr();            // Start curses mode
     noecho();             // Don't echo pressed keys
     cbreak();             // Disable line buffering
@@ -159,7 +159,7 @@ void display_data() {
         clear();
         for (int i = 0; i < (int)(sizeof(registers) / sizeof(RegisterInfo)); i++) {
             unsigned char data[2] = {0};
-            if (read_register_data(i, registers[i].length, data) == 0) {
+            if (read_register_data(i, registers[i].length, data, MPPT_ADDRESS) == 0) {
                 printw("%s (0x%02X): ", registers[i].name, i);
                 for (int j = 0; j < registers[i].length; j++) {
                     // Display each byte in binary format
@@ -198,7 +198,7 @@ int main() {
       return -1; // Exit if bus fails to open
   }
 
-  display_data();
+  display_mppt_data();
 
   close_bus();
   return 0;
