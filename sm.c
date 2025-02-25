@@ -3,6 +3,7 @@
 #include <stdio.h>          // C system headers
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 state_func_t sm_idle, sm_detumble, sm_launching, sm_deployment, sm_hibernate, sm_sun_pointing, sm_downlink, sm_research_pointing, sm_comms_pointing, sm_process_gps, sm_transmit_data;
 
@@ -22,12 +23,25 @@ void sm_init( state_machine_t * const sm_context){
 // Example definition of state functions
 int sm_idle(state_machine_t * const current_state){
     //absolute_time_t timeout_time; // the maximum we'll sleep before double checking, in microsecs 
-   if(critical_power_check()) {
+   bool in_sun = sun_visible();
+   bool power_critical = critical_power_check();
+   bool below_half = below_half_power();
+   bool researching = doing_research();
+
+   if(power_critical) 
+   {
         current_state->next_state_func = &sm_hibernate;
         return 0;
     }
-   if()
+    if(power_critical)
+    {
 
+    }
+   if(below_half)
+   {
+
+   }
+   if()
 
     else{
         // sleep a little bit!

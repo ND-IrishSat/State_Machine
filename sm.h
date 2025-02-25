@@ -11,4 +11,12 @@ struct state_machine {
 
 void sm_init( state_machine_t * const);
 
+bool critical_power_check();
+
+bool below_half_power();
+
+bool sun_visible();
+
+bool doing_research();
+
 #endif
