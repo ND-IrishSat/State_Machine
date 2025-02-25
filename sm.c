@@ -23,10 +23,10 @@ void sm_init( state_machine_t * const sm_context){
 int sm_idle(state_machine_t * const current_state){
     //absolute_time_t timeout_time; // the maximum we'll sleep before double checking, in microsecs 
    if(critical_power_check()) {
-        current_state->next_state_func = &sm_process_gps;
+        current_state->next_state_func = &sm_hibernate;
         return 0;
     }
-    if()
+   if()
 
 
     else{
