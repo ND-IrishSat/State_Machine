@@ -2,8 +2,6 @@
 // Related header, C system headers, C++ standard library headers, other libraries' headers, your project's headers.
 // Seperate section by spaces. Alphabetical within sections.
 
-#include "pico/stdlib.h"    // other libraries' headers
-
 #include "sm.h"             // our project's headers
 
 
@@ -13,12 +11,10 @@
 
 int main()
 {
-    stdio_init_all();
-
     state_machine_t sm_context;
     sm_init(&sm_context); // initialize the GPS driver here
     
-    while (true) {
+    while (1) {
         (*sm_context.next_state_func)( & sm_context);
     }
 }
