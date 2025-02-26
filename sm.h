@@ -19,4 +19,6 @@ bool sun_visible();
 
 bool doing_research();
 
+
+
 #endif
