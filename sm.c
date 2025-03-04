@@ -9,6 +9,9 @@ state_func_t sm_idle, sm_detumble, sm_launching, sm_deployment, sm_hibernate, sm
 
 
 void sm_init( state_machine_t * const sm_context){
+    // Should it intialize the state machine's context to launching first, indtead??
+    // Or are we assuming that we've already done all of that and now we're just chilling in space?
+
     // initializing the state machine's context
     sm_context->next_state_func = &sm_idle;
     sm_context->c[0] = '\0'; // just put a null character in c
