@@ -19,6 +19,16 @@ bool sun_visible();
 
 bool doing_research();
 
+bool pointing_comms();
+
+bool is_uplinking();
+
+bool is_downlinking();
+
+bool gs_visible_soon();
+
+bool gs_visible();
+
 
 
 #endif

@@ -27,6 +27,7 @@ int sm_idle(state_machine_t * const current_state) {
     bool below_half = below_half_power();
     bool researching = doing_research();
     bool comms_station_pointing = pointing_comms();
+    bool ground_station_visible_soon = gs_visible_soon();
     bool ground_station_visible = gs_visible();
     bool uplinking = is_uplinking();
     bool downlinking = is_downlinking();
@@ -35,20 +36,42 @@ int sm_idle(state_machine_t * const current_state) {
         current_state->next_state_func = &sm_hibernate;
         return 0;
     }
+    else{
+        if (below_half) {
+        if(in_sun){
+            current_state->next_state_func = &sm_sun_pointing;
+        }
+        }
+            if (ground_station_visible_soon){
+                if(researching)
+                {
+                    current_state->next_state_func = &sm_research_pointing;
+                }
+                else {
+                    current_state->next_state_func = &sm_comms_pointing;
+                }
+            
+            if (ground_station_visible){
+                    if (uplinking) {
+                        //INSERT UPLINKING CODE
 
-    if (below_half) {
-       if(in_sun){
-        current_state->next_state_func = &sm_sun_pointing;
-       }
-    }
+                    }
+                if (downlinking){
+                    // Handle downlink activity
+                }
+            }
+            else {
+                return 0;
+            }
+            
+        }
+    
+     }    
+    
 
-    if (uplinking) {
-        // Handle uplink activity
-    }
+    
 
-    if (downlinking) {
-        // Handle downlink activity
-    }
+    
 
     else {
         best_effort_wfe_or_timeout(make_timeout_time_us(10 * 1000 * 1000)); // 10 seconds sleep
