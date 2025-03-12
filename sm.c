@@ -136,3 +136,43 @@ int sm_transmit_data(state_machine_t * const current_state){
     current_state->next_state_func = &sm_idle;
     return 0;
 }
+
+bool critical_power_check(){
+    if (battery_power < 5) {
+        return true;
+    }
+}
+
+bool below_half_power(){
+    if (battery_power < 50) {
+        return true;
+    }
+}
+
+bool sun_visible(){
+    return sun_vis
+}
+
+bool doing_research(){
+    return research
+}
+
+bool pointing_comms(){
+    return pointing_to_comms
+}
+
+bool is_uplinking(){
+    return uplinking
+}
+
+bool is_downlinking(){
+    return downlinking
+}
+
+bool gs_visible_soon(){
+    return gs_vis_soon
+}
+
+bool gs_visible(){
+    return gs_vis_now
+}
