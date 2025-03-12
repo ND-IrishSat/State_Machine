@@ -7,6 +7,17 @@
 #include <stdbool.h>
 #include "sm.h"             // our project's headers
 
+// Sensor Data Globals
+int battery_power = 100;
+// change the rest to doubles that represent the actual sensors
+bool sun_vis = false;
+bool research = false;
+bool pointing_to_comms = false;
+bool uplinking = false;
+bool downlinking = false;
+bool gs_vis_soon = false;
+bool gs_vis_now = false;
+
 void toggle_variable(char input);
 
 int main()

@@ -10,15 +10,15 @@ struct state_machine {
 };
 
 // Sensor Data Globals
-int battery_power;
+extern int battery_power;
 // change the rest to doubles that represent the actual sensors
-bool sun_vis = false;
-bool research = false;
-bool pointing_to_comms = false;
-bool uplinking = false;
-bool downlinking = false;
-bool gs_vis_soon = false;
-bool gs_vis_now = false;
+extern bool sun_vis;
+extern bool research;
+extern bool pointing_to_comms;
+extern bool uplinking;
+extern bool downlinking;
+extern bool gs_vis_soon;
+extern bool gs_vis_now;
 
 // States
 void sm_init(state_machine_t * const);
@@ -55,7 +55,5 @@ bool is_uplinking(bool uplinking);
 bool is_downlinking(bool downlinking);
 bool gs_visible_soon(bool gs_vis_soon);
 bool gs_visible(bool gs_vis_now);
-
-
 
 #endif
