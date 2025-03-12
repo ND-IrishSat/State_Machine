@@ -24,42 +24,64 @@ void sm_init( state_machine_t * const sm_context){
 
 
 // Example definition of state functions
-int sm_idle(state_machine_t * const current_state){
-    //absolute_time_t timeout_time; // the maximum we'll sleep before double checking, in microsecs 
-   bool in_sun = sun_visible();
-   bool power_critical = critical_power_check();
-   bool below_half = below_half_power();
-   bool researching = doing_research();
+int sm_idle(state_machine_t * const current_state) {
+    bool in_sun = sun_visible();
+    bool power_critical = critical_power_check();
+    bool below_half = below_half_power();
+    bool researching = doing_research();
+    bool comms_station_pointing = pointing_comms();
+    bool ground_station_visible_soon = gs_visible_soon();
+    bool ground_station_visible = gs_visible();
+    bool uplinking = is_uplinking();
+    bool downlinking = is_downlinking();
 
-   if(power_critical) 
-   {
+    if (power_critical) {
         current_state->next_state_func = &sm_hibernate;
         return 0;
     }
-    if(power_critical)
-    {
-
-    }
-   if(below_half)
-   {
-
-   }
-   if()
-
     else{
-        // sleep a little bit!
-        // 9600 baud = 9600 characters / sec. 256 characters fill up in
-        // 256/9600 seconds = 27 ms. So check more frequently
-        //sleep_ms(10); // every 10 ms wake up. If too long, error will happen!
+        if (below_half) {
+        if(in_sun){
+            current_state->next_state_func = &sm_sun_pointing;
+        }
+        }
+            if (ground_station_visible_soon){
+                if(researching)
+                {
+                    current_state->next_state_func = &sm_research_pointing;
+                }
+                else {
+                    current_state->next_state_func = &sm_comms_pointing;
+                }
+            
+            if (ground_station_visible){
+                    if (uplinking) {
+                        //INSERT UPLINKING CODE
 
-        // sleep_ms is "busy wait" -- the MCU is still running at full speed and power
-        // a better way is to use "wake from event" (wfe), it goes to a lower-power state until event happens
-        // Events = interrupts or some signal we code up
-        // absolute_time_t timeout_time = make_timeout_time_us(1000*1000); 
-        best_effort_wfe_or_timeout( make_timeout_time_us(10*1000*1000) ); // 10 seconds!?!? wfe is powerful!
+                    }
+                if (downlinking){
+                    // Handle downlink activity
+                }
+            }
+            else {
+                return 0;
+            }
+            
+        }
+    
+     }    
+    
+
+    
+
+    
+
+    else {
+        best_effort_wfe_or_timeout(make_timeout_time_us(10 * 1000 * 1000)); // 10 seconds sleep
         return 0;
     }
 }
+
 
 int sm_detumble(state_machine_t * const current_state){
 

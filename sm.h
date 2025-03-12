@@ -41,4 +41,16 @@ bool sun_visible(state_machine_t * const);
 
 bool doing_research(state_machine_t * const);
 
+bool pointing_comms();
+
+bool is_uplinking();
+
+bool is_downlinking();
+
+bool gs_visible_soon();
+
+bool gs_visible();
+
+
+
 #endif
