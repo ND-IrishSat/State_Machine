@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <i2c_utils.h>
 
 state_func_t sm_idle, sm_detumble, sm_launching, sm_deployment, sm_hibernate, sm_sun_pointing, sm_downlink, sm_research_pointing, sm_comms_pointing, sm_process_gps, sm_transmit_data;
 

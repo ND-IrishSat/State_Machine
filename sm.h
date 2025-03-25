@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #ifndef sm_h
 #define sm_h
 
