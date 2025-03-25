@@ -39,8 +39,7 @@ int sm_idle(state_machine_t * const current_state) {
         current_state->next_state_func = &sm_hibernate;
         return 0;
     }
-    else{
-        if (below_half) {
+    else if (below_half) {
         if(in_sun){
             current_state->next_state_func = &sm_sun_pointing;
         }
@@ -66,17 +65,8 @@ int sm_idle(state_machine_t * const current_state) {
             else {
                 return 0;
             }
-            
-        }
     
-     }    
-    
-
-    
-
-    
-
-    else {
+     } else {
         best_effort_wfe_or_timeout(make_timeout_time_us(10 * 1000 * 1000)); // 10 seconds sleep
         return 0;
     }
@@ -118,17 +108,14 @@ int sm_comms_pointing(state_machine_t * const current_state){
 int sm_process_gps(state_machine_t * const current_state){
 
     current_state->next_state_func = &sm_idle; 
+    int seconds; // figure out where this variable is coming from
+    if (seconds % 5 == 0) {
+        current_state->next_state_func = &sm_transmit_data; // this is a trivial function, but move on to transmit
+    } else {
+        current_state->next_state_func = &sm_idle;
+    }
 
-    
-                    if (seconds % 5 == 0) {
-                        current_state->next_state_func = &sm_transmit_data; // this is a trivial function, but move on to transmit
-                    } else {
-                        current_state->next_state_func = &sm_idle;
-                    }
-
-                    return 0;;
-
-        
+    return 0;
  } 
 
 int sm_transmit_data(state_machine_t * const current_state){
@@ -150,29 +137,29 @@ bool below_half_power(){
 }
 
 bool sun_visible(){
-    return sun_vis
+    return sun_vis;
 }
 
 bool doing_research(){
-    return research
+    return research;
 }
 
 bool pointing_comms(){
-    return pointing_to_comms
+    return pointing_to_comms;
 }
 
 bool is_uplinking(){
-    return uplinking
+    return uplinking;
 }
 
 bool is_downlinking(){
-    return downlinking
+    return downlinking;
 }
 
 bool gs_visible_soon(){
-    return gs_vis_soon
+    return gs_vis_soon;
 }
 
 bool gs_visible(){
-    return gs_vis_now
+    return gs_vis_now;
 }

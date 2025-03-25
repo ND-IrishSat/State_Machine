@@ -3,9 +3,20 @@
 // Seperate section by spaces. Alphabetical within sections.
 
 #include <stdio.h>
-#include <stdlin.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "sm.h"             // our project's headers
+
+// External global variables for state conditions
+extern bool power_critical;
+extern bool half_power;
+extern bool sun;
+extern bool research;
+extern bool pointing_to_comms;
+extern bool uplinking;
+extern bool downlinking;
+extern bool gs_soon;
+extern bool gs_now;
 
 // Sensor Data Globals
 int battery_power = 100;
@@ -60,7 +71,7 @@ int main()
 
 void toggle_variable(char input) {
     switch (input) {
-        case 'b': scanf(%d, battery_power); break;
+        case 'b': scanf("%d, battery_power"); break;
         case 's': sun = !sun; break;
         case 'r': research = !research; break;
         case 'p': pointing_to_comms = !pointing_to_comms; break;
