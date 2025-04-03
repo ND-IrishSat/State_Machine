@@ -27,12 +27,17 @@
 #define CURRENT_ADDRESS_2 0x17
 
 
-//BQ28Z
-
 typedef struct {
     const char *name;
     int length;
 } RegisterInfo;
+
+//bq25672
+//battery volatage
+//solar in
+//temperature
+//heater on
+//powering on subsystems
 
 RegisterInfo registers[] = {
     {"REG00_Minimal_System_Voltage", 1},

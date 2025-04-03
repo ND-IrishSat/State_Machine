@@ -12,6 +12,5 @@ int read_register_data(int reg_addr, int length, unsigned char *data);
 void display_data();
 int open_bus();
 int close_bus();
-float get_voltage();
 
 #endif
