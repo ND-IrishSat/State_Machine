@@ -16,11 +16,13 @@
 
 //////////////////////ADDRESSES
 //MPPT
+//BQ25672
 #define MPPT_ADDRESS 0x6B 
 //GPIO
 #define GPIO_ADDRESS_1 0x24 //?? Val thinks
 #define GPIO_ADDRESS_2 0x18
 //Current Sensing Adresses
+//PAC1934
 #define CURRENT_ADDRESS_1 0x10
 #define CURRENT_ADDRESS_2 0x17
 
