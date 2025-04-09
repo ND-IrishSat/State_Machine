@@ -48,8 +48,8 @@ flowchart = {
 #   "Idle"               at (100,550)
 #
 # SOC branch:
-#   "SOC>5 Check"        at (300,550) [diamond]
-#   "SOC>50 Check"       at (300,500) [diamond]  <-- placed above SOC>5 Check.
+#   "SOC>50 Check"       at (300,500) [diamond]  <-- above SOC>5 Check.
+#   "SOC>5 Check"        at (300,600) [diamond]
 #   "Hibernate"          at (300,700) [rect]
 #
 # Further right:
@@ -59,7 +59,8 @@ flowchart = {
 #   "Sun Pointing"       at (700,650) [rect]
 #   "Research Pointing"  at (900,500) [rect]
 #   "Comms Pointing"     at (900,600) [rect]
-#   "Ground Station"     at (1100,550) [diamond] (horizontally aligned with SOC branch)\n#   "Up/Down Link"       at (1300,550) [rect]
+#   "Ground Station"     at (1100,550) [diamond]
+#   "Up/Down Link"       at (1300,550) [rect]
 # -----------------------------------------------------------------------------
 nodes_info = {
     "Launching": {"pos": (100, 100), "shape": "rect"},
@@ -93,11 +94,18 @@ HALF_HEIGHT = BOX_HEIGHT // 2
 current_node = "Launching"
 
 # -----------------------------------------------------------------------------
-# Load your club logo image once.
+# Main GUI setup.
+# -----------------------------------------------------------------------------
+root = tk.Tk()
+root.title("Optimized Flowchart with Revised SOC Checks and Club Logo")
+
+# -----------------------------------------------------------------------------
+# Now load your club logo image after creating the root window.
+# Use a raw string for the file path to avoid escape sequence issues.
 # -----------------------------------------------------------------------------
 try:
-    # Change the filename below to your actual club logo image file.
-    logo_img = Image.open(".\SHAMROCKMissionPatch.png")
+    logo_img = Image.open(r".\SHAMROCKMissionPatch.png")
+    logo_img = logo_img.resize((400, 400))
     logo_tk = ImageTk.PhotoImage(logo_img)
 except Exception as e:
     print("Error loading club logo image:", e)
@@ -114,35 +122,38 @@ def draw_rectangle(canvas, cx, cy, highlight=False):
 
 def draw_diamond(canvas, cx, cy, highlight=False):
     fill_color = "yellow" if highlight else "white"
-    points = [(cx, cy - HALF_HEIGHT),
-              (cx + HALF_WIDTH, cy),
-              (cx, cy + HALF_HEIGHT),
-              (cx - HALF_WIDTH, cy)]
+    points = [
+        (cx, cy - HALF_HEIGHT),
+        (cx + HALF_WIDTH, cy),
+        (cx, cy + HALF_HEIGHT),
+        (cx - HALF_WIDTH, cy)
+    ]
     canvas.create_polygon(points, fill=fill_color, outline="black", width=2)
 
 # -----------------------------------------------------------------------------
 # Draw arrow connections using straight lines with right angles.
 #
 # Special Cases:
-# - For the arrow from "SOC>5 Check" to "SOC>50 Check": it exits the top of SOC>5 Check and touches the bottom of SOC>50 Check.
-# - For "SOC>5 Check" -> "Sun Side": route from the bottom of SOC>5 Check and enter from the left side of Sun Side.
+# - For the arrow from "SOC>5 Check" to "SOC>50 Check": it exits the top of SOC>5 Check
+#   and touches the bottom of SOC>50 Check.
+# - For "SOC>5 Check" -> "Sun Side": route from the bottom of SOC>5 Check to the left side of Sun Side.
 # - For leftward transitions into "Idle", the arrow enters at the bottom-center.
 # -----------------------------------------------------------------------------
 def draw_connection(canvas, src, dest):
     x1, y1 = nodes_info[src]["pos"]
     x2, y2 = nodes_info[dest]["pos"]
 
-    # Special case: SOC>5 Check -> SOC>50 Check.
+    # Special case for SOC>5 Check -> SOC>50 Check:
     if src == "SOC>5 Check" and dest == "SOC>50 Check":
         p1 = (x1, y1 - HALF_HEIGHT)  # Top center of SOC>5 Check.
         p2 = (x2, y2 + HALF_HEIGHT)  # Bottom center of SOC>50 Check.
         canvas.create_line([p1, p2], arrow=tk.LAST, width=2)
         return
 
-    # Special case: SOC>5 Check -> Sun Side.
+    # Special case for SOC>5 Check -> Sun Side:
     if src == "SOC>5 Check" and dest == "Sun Side":
         p1 = (x1, y1 + HALF_HEIGHT)  # Bottom center of SOC>5 Check.
-        p2 = (x1, y2)                # Vertical drop to Sun Side level.
+        p2 = (x1, y2)                # Move vertically to Sun Side level.
         p3 = (x2 - HALF_WIDTH, y2)    # Enter Sun Side from left.
         canvas.create_line([p1, p2, p3], arrow=tk.LAST, width=2)
         return
@@ -189,7 +200,7 @@ def draw_connection(canvas, src, dest):
     canvas.create_line([p1, p2, p3, p4], arrow=tk.LAST, width=2)
 
 # -----------------------------------------------------------------------------
-# Draw the complete flowchart (nodes and arrows) and display booleans in order.
+# Draw the complete flowchart (nodes and arrows), display booleans, and club logo.
 # -----------------------------------------------------------------------------
 def draw_flowchart(canvas):
     canvas.delete("all")
@@ -207,16 +218,15 @@ def draw_flowchart(canvas):
             if src in nodes_info and dest in nodes_info:
                 draw_connection(canvas, src, dest)
                 
-    # Create the boolean status string in the specified order.
+    # Display booleans in the specified order.
     order = ["SOC>5", "SOC>50", "Ground_Station_Soon", "Sun_Side", "Doing_Research", "Ground_Station"]
     bool_str = "   ".join(f"{key}: {bool_vars[key]}" for key in order)
     canvas.create_text(800, 780, text=bool_str, font=("Arial", 14), fill="black")
     
-    # Draw the club logo image in a blank area (e.g., top-right corner).
+    # Draw the club logo image in the top-right corner.
     if logo_tk:
-      canvas.create_image(1200, 50, anchor=tk.NW, image=logo_tk)
-      canvas.logo = logo_tk  # Keep a reference!
-
+        canvas.create_image(600, 50, anchor=tk.NW, image=logo_tk)
+        canvas.logo = logo_tk  # Keep reference!
 
 # -----------------------------------------------------------------------------
 # Update the current state using the following logic:
@@ -306,7 +316,7 @@ def update_highlight(canvas):
                 current_node = random.choice(next_states)
         draw_flowchart(canvas)
         time.sleep(3)
-
+  
 # -----------------------------------------------------------------------------
 # Key handler to toggle boolean flags.
 #
@@ -329,7 +339,7 @@ def handle_keypress(event):
 # -----------------------------------------------------------------------------
 # Main GUI setup.
 # -----------------------------------------------------------------------------
-root = tk.Tk()
+root.geometry("1600x800")
 root.title("Optimized Flowchart with Revised Boolean Order and Club Logo")
 
 canvas = tk.Canvas(root, width=1600, height=800, bg="#D0E0FF")
