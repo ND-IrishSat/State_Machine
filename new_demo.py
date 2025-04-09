@@ -8,23 +8,25 @@ from PIL import Image, ImageTk
 # Boolean variables used to drive transitions.
 # -----------------------------------------------------------------------------
 bool_vars = {
-    "SOC": False,             # Determines branch at SOC_Check
-    "Sun_Side": False,        # Determines branch at Sun Side
-    "Ground_Station": False,  # Determines branch at Ground Station node
-    "Doing_Research": False,  # Determines branch at Doing Research diamond
+    "SOC>50": False,            # Determines branch at SOC>50 Check
+    "SOC>5": False,             # New boolean determining branch at SOC>5 Check
+    "Sun_Side": False,          # Determines branch at Sun Side
+    "Ground_Station": False,    # Determines branch at Ground Station node
+    "Doing_Research": False,    # Determines branch at Doing Research diamond
     "Ground_Station_Soon": False  # Determines branch at Ground Station Soon
 }
 
 # -----------------------------------------------------------------------------
 # Flowchart transitions for drawing arrows.
-# These serve mainly for arrow drawing (the dynamic logic is in update_highlight).
+# (Mainly used for arrow drawing; dynamic logic is in update_highlight.)
 # -----------------------------------------------------------------------------
 flowchart = {
     "Launching": ["Detumbling"],
     "Detumbling": ["Deploy Solar/Mono"],
     "Deploy Solar/Mono": ["Idle"],
-    "Idle": ["SOC_Check"],
-    "SOC_Check": ["Ground Station Soon", "Sun Side"],
+    "Idle": ["SOC>5 Check"],
+    "SOC>5 Check": ["SOC>50 Check", "Hibernate"],
+    "SOC>50 Check": ["Ground Station Soon", "Sun Side"],
     "Ground Station Soon": ["Doing Research", "Sun Side"],
     "Sun Side": ["Sun Pointing", "Idle"],
     "Doing Research": ["Research Pointing", "Comms Pointing"],
@@ -32,37 +34,41 @@ flowchart = {
     "Comms Pointing": ["Ground Station"],
     "Sun Pointing": ["Idle"],
     "Ground Station": ["Up/Down Link", "Idle"],
-    "Up/Down Link": ["Idle"]
+    "Up/Down Link": ["Idle"],
+    "Hibernate": ["Idle"]
 }
 
 # -----------------------------------------------------------------------------
 # Nodes definition: positions and shapes.
 #
-# The new layout arranges a vertical stack in the left column:
-#    "Launching"    at (100,100)
-#    "Detumbling"   at (100,250)
-#    "Deploy Solar/Mono" at (100,400)
-#    "Idle"         at (100,550)
+# Left vertical stack:
+#   "Launching"          at (100,100)
+#   "Detumbling"         at (100,250)
+#   "Deploy Solar/Mono"  at (100,400)
+#   "Idle"               at (100,550)
 #
-# Then the branch nodes:
-#    "SOC_Check"          at (300,550) [diamond]
-#    "Ground Station Soon" at (500,550) [diamond]
-#    "Sun Side"           at (500,650) [diamond]
+# SOC branch:
+#   "SOC>5 Check"        at (300,550) [diamond]
+#   "SOC>50 Check"       at (300,500) [diamond]  <-- placed above SOC>5 Check.
+#   "Hibernate"          at (300,700) [rect]
 #
-# Then subsequent nodes:
-#    "Doing Research"     at (700,550) [diamond]
-#    "Sun Pointing"       at (700,650) [rect]
-#    "Research Pointing"  at (900,500) [rect]
-#    "Comms Pointing"     at (900,600) [rect]
-#    "Ground Station"     at (1100,550) [diamond] - aligned horizontally with SOC_Check
-#    "Up/Down Link"       at (1300,550) [rect]
+# Further right:
+#   "Ground Station Soon" at (500,550) [diamond]
+#   "Sun Side"           at (500,650) [diamond]
+#   "Doing Research"     at (700,550) [diamond]
+#   "Sun Pointing"       at (700,650) [rect]
+#   "Research Pointing"  at (900,500) [rect]
+#   "Comms Pointing"     at (900,600) [rect]
+#   "Ground Station"     at (1100,550) [diamond] (horizontally aligned with SOC branch)\n#   "Up/Down Link"       at (1300,550) [rect]
 # -----------------------------------------------------------------------------
 nodes_info = {
     "Launching": {"pos": (100, 100), "shape": "rect"},
     "Detumbling": {"pos": (100, 250), "shape": "rect"},
     "Deploy Solar/Mono": {"pos": (100, 400), "shape": "rect"},
     "Idle": {"pos": (100, 550), "shape": "rect"},
-    "SOC_Check": {"pos": (300, 550), "shape": "diamond"},
+    "SOC>50 Check": {"pos": (300, 500), "shape": "diamond"},
+    "SOC>5 Check": {"pos": (300, 600), "shape": "diamond"},
+    "Hibernate": {"pos": (300, 700), "shape": "rect"},
     "Ground Station Soon": {"pos": (500, 550), "shape": "diamond"},
     "Sun Side": {"pos": (500, 650), "shape": "diamond"},
     "Doing Research": {"pos": (700, 550), "shape": "diamond"},
@@ -87,46 +93,61 @@ HALF_HEIGHT = BOX_HEIGHT // 2
 current_node = "Launching"
 
 # -----------------------------------------------------------------------------
+# Load your club logo image once.
+# -----------------------------------------------------------------------------
+try:
+    # Change the filename below to your actual club logo image file.
+    logo_img = Image.open(".\SHAMROCKMissionPatch.png")
+    logo_tk = ImageTk.PhotoImage(logo_img)
+except Exception as e:
+    print("Error loading club logo image:", e)
+    logo_tk = None
+
+# -----------------------------------------------------------------------------
 # Drawing helper functions.
 # -----------------------------------------------------------------------------
 def draw_rectangle(canvas, cx, cy, highlight=False):
     fill_color = "yellow" if highlight else "white"
-    canvas.create_rectangle(
-        cx - HALF_WIDTH, cy - HALF_HEIGHT,
-        cx + HALF_WIDTH, cy + HALF_HEIGHT,
-        fill=fill_color, outline="black", width=2
-    )
+    canvas.create_rectangle(cx - HALF_WIDTH, cy - HALF_HEIGHT,
+                            cx + HALF_WIDTH, cy + HALF_HEIGHT,
+                            fill=fill_color, outline="black", width=2)
 
 def draw_diamond(canvas, cx, cy, highlight=False):
     fill_color = "yellow" if highlight else "white"
-    points = [
-        (cx, cy - HALF_HEIGHT),   # Top
-        (cx + HALF_WIDTH, cy),      # Right
-        (cx, cy + HALF_HEIGHT),   # Bottom
-        (cx - HALF_WIDTH, cy)       # Left
-    ]
+    points = [(cx, cy - HALF_HEIGHT),
+              (cx + HALF_WIDTH, cy),
+              (cx, cy + HALF_HEIGHT),
+              (cx - HALF_WIDTH, cy)]
     canvas.create_polygon(points, fill=fill_color, outline="black", width=2)
 
 # -----------------------------------------------------------------------------
 # Draw arrow connections using straight lines with right angles.
 #
-# --- Special case: if src == "SOC_Check" and dest == "Sun Side",
-#     we route the arrow to exit from the bottom of SOC_Check and
-#     enter the left side of Sun Side.
+# Special Cases:
+# - For the arrow from "SOC>5 Check" to "SOC>50 Check": it exits the top of SOC>5 Check and touches the bottom of SOC>50 Check.
+# - For "SOC>5 Check" -> "Sun Side": route from the bottom of SOC>5 Check and enter from the left side of Sun Side.
+# - For leftward transitions into "Idle", the arrow enters at the bottom-center.
 # -----------------------------------------------------------------------------
 def draw_connection(canvas, src, dest):
     x1, y1 = nodes_info[src]["pos"]
     x2, y2 = nodes_info[dest]["pos"]
 
-    # Special case for SOC_Check -> Sun Side.
-    if src == "SOC_Check" and dest == "Sun Side":
-        p1 = (x1, y1 + HALF_HEIGHT)            # Bottom center of SOC_Check.
-        p2 = (x1, y2)                          # Move vertically down to level of Sun Side.
-        p3 = (x2 - HALF_WIDTH, y2)              # Enter Sun Side from its left side.
+    # Special case: SOC>5 Check -> SOC>50 Check.
+    if src == "SOC>5 Check" and dest == "SOC>50 Check":
+        p1 = (x1, y1 - HALF_HEIGHT)  # Top center of SOC>5 Check.
+        p2 = (x2, y2 + HALF_HEIGHT)  # Bottom center of SOC>50 Check.
+        canvas.create_line([p1, p2], arrow=tk.LAST, width=2)
+        return
+
+    # Special case: SOC>5 Check -> Sun Side.
+    if src == "SOC>5 Check" and dest == "Sun Side":
+        p1 = (x1, y1 + HALF_HEIGHT)  # Bottom center of SOC>5 Check.
+        p2 = (x1, y2)                # Vertical drop to Sun Side level.
+        p3 = (x2 - HALF_WIDTH, y2)    # Enter Sun Side from left.
         canvas.create_line([p1, p2, p3], arrow=tk.LAST, width=2)
         return
 
-    # For nearly vertical alignment, draw a straight vertical line.
+    # For nearly vertical alignment, use a direct vertical line.
     if abs(x2 - x1) < 10:
         if y2 > y1:
             p1 = (x1, y1 + HALF_HEIGHT)
@@ -137,14 +158,14 @@ def draw_connection(canvas, src, dest):
         canvas.create_line(p1, p2, arrow=tk.LAST, width=2)
         return
 
-    # For leftward transitions into "Idle", route to the bottom-center of Idle.
+    # For leftward transitions into "Idle", route to bottom-center of Idle.
     if x2 < x1 and dest == "Idle":
         max_y = max(info["pos"][1] for info in nodes_info.values())
         route_y = max_y + HALF_HEIGHT + 20
         p1 = (x1, y1 + HALF_HEIGHT)
         p2 = (x1, route_y)
         p3 = (x2, route_y)
-        p4 = (x2, y2 + HALF_HEIGHT)  # Bottom-center entry for Idle.
+        p4 = (x2, y2 + HALF_HEIGHT)
         canvas.create_line([p1, p2, p3, p4], arrow=tk.LAST, width=2)
         return
     elif x2 < x1:
@@ -168,7 +189,7 @@ def draw_connection(canvas, src, dest):
     canvas.create_line([p1, p2, p3, p4], arrow=tk.LAST, width=2)
 
 # -----------------------------------------------------------------------------
-# Draw the complete flowchart (nodes and arrows).
+# Draw the complete flowchart (nodes and arrows) and display booleans in order.
 # -----------------------------------------------------------------------------
 def draw_flowchart(canvas):
     canvas.delete("all")
@@ -185,15 +206,27 @@ def draw_flowchart(canvas):
         for dest in dest_list:
             if src in nodes_info and dest in nodes_info:
                 draw_connection(canvas, src, dest)
-    canvas.create_text(800, 780, text=f"Booleans: {bool_vars}",
-                       font=("Arial", 14), fill="black")
+                
+    # Create the boolean status string in the specified order.
+    order = ["SOC>5", "SOC>50", "Ground_Station_Soon", "Sun_Side", "Doing_Research", "Ground_Station"]
+    bool_str = "   ".join(f"{key}: {bool_vars[key]}" for key in order)
+    canvas.create_text(800, 780, text=bool_str, font=("Arial", 14), fill="black")
+    
+    # Draw the club logo image in a blank area (e.g., top-right corner).
+    if logo_tk:
+      canvas.create_image(1200, 50, anchor=tk.NW, image=logo_tk)
+      canvas.logo = logo_tk  # Keep a reference!
+
 
 # -----------------------------------------------------------------------------
 # Update the current state using the following logic:
 #
-#   Launching → Detumbling → Deploy Solar/Mono → Idle → SOC_Check.
-#   At SOC_Check:
-#       if SOC is true → Ground Station Soon,
+#   Launching → Detumbling → Deploy Solar/Mono → Idle → SOC>5 Check.
+#   At SOC>5 Check:
+#       if SOC>5 is true → SOC>50 Check,
+#       else → Hibernate.
+#   At SOC>50 Check:
+#       if SOC>50 is true → Ground Station Soon,
 #       else → Sun Side.
 #   At Ground Station Soon:
 #       if Ground_Station_Soon is true → Doing Research,
@@ -201,6 +234,8 @@ def draw_flowchart(canvas):
 #   At Sun Side:
 #       if Sun_Side is true → Sun Pointing,
 #       else → Idle.
+#   At Hibernate:
+#       Flow to Idle.
 #   At Doing Research:
 #       if Doing_Research is true → Research Pointing,
 #       else → Comms Pointing.
@@ -213,6 +248,12 @@ def draw_flowchart(canvas):
 def update_highlight(canvas):
     global current_node
     while True:
+        # Enforce boolean constraints: if SOC>50 is true, then SOC>5 must be true.
+        if bool_vars["SOC>50"] and not bool_vars["SOC>5"]:
+            bool_vars["SOC>5"] = True
+        if not bool_vars["SOC>5"] and bool_vars["SOC>50"]:
+            bool_vars["SOC>50"] = False
+
         if current_node == "Launching":
             current_node = "Detumbling"
         elif current_node == "Detumbling":
@@ -220,9 +261,14 @@ def update_highlight(canvas):
         elif current_node == "Deploy Solar/Mono":
             current_node = "Idle"
         elif current_node == "Idle":
-            current_node = "SOC_Check"
-        elif current_node == "SOC_Check":
-            if bool_vars["SOC"]:
+            current_node = "SOC>5 Check"
+        elif current_node == "SOC>5 Check":
+            if bool_vars["SOC>5"]:
+                current_node = "SOC>50 Check"
+            else:
+                current_node = "Hibernate"
+        elif current_node == "SOC>50 Check":
+            if bool_vars["SOC>50"]:
                 current_node = "Ground Station Soon"
             else:
                 current_node = "Sun Side"
@@ -236,6 +282,8 @@ def update_highlight(canvas):
                 current_node = "Sun Pointing"
             else:
                 current_node = "Idle"
+        elif current_node == "Hibernate":
+            current_node = "Idle"
         elif current_node == "Doing Research":
             if bool_vars["Doing_Research"]:
                 current_node = "Research Pointing"
@@ -261,16 +309,18 @@ def update_highlight(canvas):
 
 # -----------------------------------------------------------------------------
 # Key handler to toggle boolean flags.
-# Keys:
-#   'a': SOC, 'b': Sun_Side, 'c': Ground_Station, 'd': Doing_Research, 'e': Ground_Station_Soon.
+#
+# Use number keys for toggling in this order:
+#   1: SOC>5, 2: SOC>50, 3: Ground_Station_Soon, 4: Sun_Side, 5: Doing_Research, 6: Ground_Station.
 # -----------------------------------------------------------------------------
 def handle_keypress(event):
     key_map = {
-        "a": "SOC",
-        "b": "Sun_Side",
-        "c": "Ground_Station",
-        "d": "Doing_Research",
-        "e": "Ground_Station_Soon"
+        "1": "SOC>5",
+        "2": "SOC>50",
+        "3": "Ground_Station_Soon",
+        "4": "Sun_Side",
+        "5": "Doing_Research",
+        "6": "Ground_Station"
     }
     if event.keysym in key_map:
         bool_vars[key_map[event.keysym]] = not bool_vars[key_map[event.keysym]]
@@ -280,7 +330,7 @@ def handle_keypress(event):
 # Main GUI setup.
 # -----------------------------------------------------------------------------
 root = tk.Tk()
-root.title("Optimized Flowchart with Vertical Stack including Idle and Updated Arrow Routing")
+root.title("Optimized Flowchart with Revised Boolean Order and Club Logo")
 
 canvas = tk.Canvas(root, width=1600, height=800, bg="#D0E0FF")
 canvas.pack()
